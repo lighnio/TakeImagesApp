@@ -1,12 +1,18 @@
 import { StatusBar } from "expo-status-bar";
-import React from "react";
-import { Alert, StyleSheet, Text, View, TouchableOpacity } from "react-native";
+import React, { useState } from "react";
+import { Alert, StyleSheet, Text, View, TouchableOpacity, ImageBackground} from "react-native";
 import { Camera } from "expo-camera";
 
 export default function App() {
-  let camera: any;
+  // Hooks
   const [startCamera, setStartCamera] = React.useState(false);
+  const [previewVisible, setPreviewVisible] = useState(false);
+  const [capturedImage, setCapturedImage] = useState<any>(null);
 
+  // Variables
+  let camera: any;
+
+  // Functions
   const __startCamera = async () => {
     const { status } = await Camera.requestCameraPermissionsAsync();
 
@@ -18,21 +24,56 @@ export default function App() {
     }
   };
 
-  const __takePicture = async () => {
-    console.log("TAKING PICTUREEEE");
+  // Components
+
+  const CameraPreview = ({photo}: any) => {
+    console.log(photo);
+    return(
+      <View
+        style={{
+          backgroundColor: 'transparent',
+          flex: 1, 
+          width: '100%',
+          height: '100%'
+        }}>
+          <ImageBackground
+            source={{uri: photo && photo.uri}}
+            style={{
+              flex: 1
+            }}>
+
+          </ImageBackground>
+      </View>
+    )
     
   }
+
+  const __takePicture = async () => {
+    // Above line validate if the camera has permissions
+    if(!camera) return;
+    const photo = await camera.takePictureAsync();
+    console.log(photo);
+    setPreviewVisible(true);
+    setCapturedImage(photo)
+    
+  }
+
 
   return (
     <View style={styles.container}>
       {startCamera ? (
-        <Camera
+        <>
+         {previewVisible && capturedImage ? (
+          <CameraPreview photo={capturedImage}/>
+          
+        ):(
+          <Camera
           style={{ flex: 1, width: "100%" }}
           ref={(r) => {
             camera = r;
           }}
         >
-
+  
           <View
             style={{
               position: "absolute",
@@ -49,7 +90,7 @@ export default function App() {
                   flex: 1,
                   alignItems: 'center'
                 }}>
-
+  
                   <TouchableOpacity
                     onPress={__takePicture}
                     style={{
@@ -59,14 +100,16 @@ export default function App() {
                       borderRadius: 50,
                       backgroundColor: '#fff'
                     }}>
-
+  
                   </TouchableOpacity>
-
+  
               </View>
-
+  
           </View>
-
-        </Camera>
+  
+          </Camera>
+        )}
+        </>
       ) : (
         <View
           style={{
